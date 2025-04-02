@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> 
+    <script>
+        async function loadDashboard() {
+            let token = localStorage.getItem("access_token");
+            if (!token) {
+                window.location.href = "/login/";
+                return;
+            }
+
+            let response = await fetch("/api/dashboard/", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            let data = await response.json();
+
+            if (response.ok) {
+                document.getElementById("username").innerText = "Username: " + data.username;
+                document.getElementById("email").innerText = "Email: " + data.email;
+                document.getElementById("role").innerText = "Role: " + data.role;
+
+                if (data.role === "teacher") {
+                    let studentsList = document.getElementById("students");
+                    studentsList.innerHTML = "<h3>Students</h3>";
+                    data.students.forEach(student => {
+                        studentsList.innerHTML += `<p class="student">${student.user}</p>`;
+                    });
+                } else if (data.role === "student") {
+                    document.getElementById("teacher").innerText = "Teacher: " + data.teacher.user;
+                }
+            } else {
+                localStorage.removeItem("access_token");
+                window.location.href = "/login/";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            localStorage.removeItem("role");
+            window.location.href = "/login/";
+        }
+    </script>
+</head>
+<body onload="loadDashboard()">
+    <div class="container">
+        <div class="header">
+            <h2>Dashboard</h2>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </div>
+        
+        <div class="info">
+            <p id="username"></p>
+            <p id="email"></p>
+            <p id="role"></p>
+            <p id="teacher"></p>
+        </div>
+        
+        
+    </div>
+</body>
+</html>
